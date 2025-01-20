@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Assinatura</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        canvas {
+            border: 2px solid black;
+            background-color: #f8f8f8;
+            cursor: crosshair;
+        }
+        .btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Assine abaixo</h1>
+        <canvas id="canvas" width="400" height="200"></canvas><br>
+        <button class="btn" onclick="limparAssinatura()">Limpar</button>
+        <form method="POST" enctype="multipart/form-data" onsubmit="redirecionarSucesso(event)">
+            {% csrf_token %}
+            <input type="hidden" id="assinatura_imagem" name="imagem">
+            <br>
+            <input type="text" name="nome" placeholder="Digite seu nome" required>
+            <button type="submit" class="btn">Salvar Assinatura</button>
+        </form>        
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let desenhando = false;
+
+        function iniciarDesenho(event) {
+            desenhando = true;
+            ctx.beginPath();
+            ctx.moveTo(event.offsetX, event.offsetY);
+        }
+
+        function desenhar(event) {
+            if (!desenhando) return;
+            ctx.lineTo(event.offsetX, event.offsetY);
+            ctx.stroke();
+        }
+
+        function pararDesenho() {
+            desenhando = false;
+            capturarAssinatura();
+        }
+
+        function capturarAssinatura() {
+            const imagem = canvas.toDataURL('image/png');
+            document.getElementById('assinatura_imagem').value = imagem;
+        }
+
+        function limparAssinatura() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('assinatura_imagem').value = '';
+        }
+
+        canvas.addEventListener('mousedown', iniciarDesenho);
+        canvas.addEventListener('mousemove', desenhar);
+        canvas.addEventListener('mouseup', pararDesenho);
+        canvas.addEventListener('mouseleave', pararDesenho);
+
+        function redirecionarSucesso(event) {
+            event.preventDefault();  // Evita o envio tradicional
+    
+            const form = event.target;
+            const formData = new FormData(form);
+    
+            fetch("", {  // Submete o formulário para a URL atual
+                method: "POST",
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = "/sucesso";
+                }
+            }).catch(error => {
+                console.error("Erro ao salvar:", error);
+            });
+        }
+    </script>
+</body>
+</html>
